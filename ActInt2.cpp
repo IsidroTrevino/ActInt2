@@ -92,7 +92,7 @@ void calculaCostoPosible(node &nodoAct, vector<vector<int>> &matAdj, int n) {
     }
 }
 
-pair<int, vector<int>> tsp(vector<vector<int>> &matAdj, const vector<int> &nonCentralIndices) {
+pair<int, vector<int>> tspConCentrales(vector<vector<int>> &matAdj, const vector<int> &nonCentralIndices, const vector<int> &centralIndices, const vector<Colonias> &colonias) {
     int n = nonCentralIndices.size();
     int costoOpt = INF;
     vector<int> rutaOptima;
@@ -116,8 +116,9 @@ pair<int, vector<int>> tsp(vector<vector<int>> &matAdj, const vector<int> &nonCe
 
         if (nodoAct.costoPos >= costoOpt) continue;
 
-        for (int i : nonCentralIndices) {
-            if (!nodoAct.visitados[i] && matAdj[nodoAct.verticeActual][i] != INF) {
+        for (int i = 0; i < matAdj.size(); i++) {
+            // Solo considerar conexiones válidas (no `isNew`) y no visitadas
+            if (!nodoAct.visitados[i] && !colonias[i].isNew && matAdj[nodoAct.verticeActual][i] != INF) {
                 node hijo;
                 hijo.nivel = nodoAct.nivel + 1;
                 hijo.verticeActual = i;
@@ -127,7 +128,17 @@ pair<int, vector<int>> tsp(vector<vector<int>> &matAdj, const vector<int> &nonCe
                 hijo.ruta = nodoAct.ruta;
                 hijo.ruta.push_back(i);
 
-                if (hijo.nivel == n - 1) {
+                // Verificar si se han visitado todas las no centrales
+                bool todasVisitadas = true;
+                for (int nc : nonCentralIndices) {
+                    if (!hijo.visitados[nc]) {
+                        todasVisitadas = false;
+                        break;
+                    }
+                }
+
+                if (todasVisitadas && hijo.nivel >= n) {
+                    // Intentar cerrar el ciclo si es válido
                     int costoReal = hijo.costoAcum + matAdj[i][nonCentralIndices[0]];
                     if (matAdj[i][nonCentralIndices[0]] != INF && costoReal < costoOpt) {
                         costoOpt = costoReal;
@@ -173,20 +184,14 @@ int main() {
     iniciaMatriz(matAdj, n);
     leeDatos(matAdj, nombreToIndex, m);
 
-    for (int i = 0; i < k; i++) {
-        string a, b;
-        cin >> a >> b;
-        int idxA = nombreToIndex[a];
-        int idxB = nombreToIndex[b];
-        matAdj[idxA][idxB] = matAdj[idxB][idxA] = 0;
-    }
+    //! FALTA UN CIN NO SUBIR NO SUBIR NO SUBIR
 
     for (int i = 0; i < q; i++) {
         cin >> nombre >> x >> y;
         Col.push_back(Colonias(nombre, false, true, x, y));
     }
 
-    auto [costoOptimo, rutaOptima] = tsp(matAdj, nonCentralIndices);
+    auto [costoOptimo, rutaOptima] = tspConCentrales(matAdj, nonCentralIndices, centralIndices, Col);
 
     cout << "-------------------\n";
     cout << "2 - La ruta óptima.\n";
@@ -195,25 +200,32 @@ int main() {
         if (i < rutaOptima.size() - 1) cout << " - ";
     }
     cout << "\nLa Ruta Óptima tiene un costo total de: " << costoOptimo << endl;
-
-    floydWarshall(matAdj, n);
-
     cout << "-------------------\n";
-    cout << "3 – Caminos más cortos entre centrales.\n";
 
-    for (size_t i = 0; i < centralIndices.size(); i++) {
-        for (size_t j = i + 1; j < centralIndices.size(); j++) {
-            int c1 = centralIndices[i];
-            int c2 = centralIndices[j];
-            if (matAdj[c1][c2] != INF) {
-                cout << Col[c1].nombre << " - " << Col[c2].nombre << " (" << matAdj[c1][c2] << ")\n";
-            }
-        }
-    }
-    cout << "-------------------\n";
     return 0;
 }
 
+//TODO - Test cases sin la conexion nueva
+/*
+5 8 1 2
+LindaVista 200 120 1
+Purisima 150 75 0
+Tecnologico -50 20 1
+Roma -75 50 0
+AltaVista -50 40 0
+LindaVista Purisima 48
+LindaVista Roma 17
+Purisima Tecnologico 40
+Purisima Roma 50
+Purisima AltaVista 80
+Tecnologico Roma 55
+Tecnologico AltaVista 15
+Roma AltaVista 18
+Independencia 180 -15
+Roble 45 68
+*/
+
+//TODO - Test cases normales:
 /*
 5 8 1 2
 LindaVista 200 120 1
