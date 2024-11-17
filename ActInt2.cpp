@@ -4,10 +4,123 @@
 #include <climits>
 #include <map>
 #include <queue>
+#include <fstream>
+#include <algorithm>
 
 #define INF INT_MAX
 
 using namespace std;
+
+struct edgeK
+{
+    pair<int,int> conection;
+    int cost;
+};
+
+struct Graph{
+    // E Arcos (Edges)
+    // V Vertices (Vertex)
+    int V, E, costMSTKruskal;
+    map<pair<int,int>,int> edgeToWeight;
+    map<pair<int,int>,int> edgeToIndex;
+    vector<pair<int, pair<int,int>>> edges; // Utilizar en Kruskañ
+    vector<pair<int, pair<int,int>>> selectedEdgesK; // Arcos seleccionados por Kruskal
+    Graph(int V, int E){
+        this->V = V;
+        this->E = E;
+        costMSTKruskal = 0;
+    }
+    // u = saldia del arco
+    // v = llegada del arco
+    // w = costo del arco
+    void addEdge(int u, int v, int w){
+        edges.push_back({w,{u,v}}); // first = costo, second = conexión
+        edgeToWeight[{u,v}] = w;
+        edgeToIndex[{u,v}] = edges.size() -1;
+    }
+    void load();
+    void print();
+    void kruskalMST();
+    void primMST();
+    void printEdgesK(map<int, string>, ofstream &checking2);
+};
+
+//disjoint sets (Union FInd)
+struct DisjointSets{
+    int *parent, *rank;
+    int n;
+    DisjointSets(int n){
+        this->n = n;
+        parent = new int[n+1];
+        rank = new int[n+1];
+        for (int i = 0; i <= n; i++){
+            rank[i] = 0;
+            parent[i] = i;
+        }
+        }
+    //Para encontrar el parent de u
+    int find(int u){
+        if (u != parent[u]){
+            parent[u] = find(parent[u]);
+        }
+        return parent[u];
+        
+    }
+
+    void merge(int x, int y){
+        x=find(x);
+        y=find(y);
+        if(rank[x]>rank[y]){
+            parent[y] = x;
+        }
+        else{
+            parent[x] = y;
+        }
+        if(rank[x] == rank[y]){
+            rank[y]++;
+        }
+    }
+        
+    
+};
+
+void Graph::load(){
+    int a,b,c;
+    for (int i = 0; i < E; i++)
+    {
+        cin >> a>>b>>c;
+        addEdge(a,b,c);
+        addEdge(b,a,c);
+    }
+}
+
+// O(E log E)
+void Graph::kruskalMST(){
+    sort(edges.begin(), edges.end()); //ordenar ascendentemente con respecto al costo
+    DisjointSets ds(V);
+    costMSTKruskal = 0;
+    for(auto it:edges){
+        int p1 = ds.find(it.second.first);
+        int p2 = ds.find(it.second.second);
+        if(p1 != p2){
+            costMSTKruskal += it.first;
+            selectedEdgesK.push_back({it.first,it.second});
+            ds.merge(it.second.first,it.second.second);
+        }
+    }
+}
+
+void Graph::printEdgesK(map<int, string> indexToNombre, ofstream &checking2){
+    checking2 << "-------------------" << endl;
+    checking2 << "1 - Cableado óptimo de nueva conexión." << endl << endl;
+    for(auto it:selectedEdgesK){
+        if ( it.first != 0){
+        checking2 << indexToNombre[it.second.first] << " - " << indexToNombre[it.second.second] << " " << it.first;
+        checking2 << endl;
+        }
+    }
+    checking2 << endl;
+}
 
 struct Colonias{
     string nombre;
@@ -49,7 +162,8 @@ void iniciaMatriz(vector<vector<int>> &matAdj, int n) {
     }
 }
 
-void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int m) {
+
+void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int m, Graph & g) {
     string a, b;
     int c;
     for (int i = 0; i < m; i++) {
@@ -57,30 +171,17 @@ void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int 
         int idxA = nombreToIndex[a];
         int idxB = nombreToIndex[b];
         matAdj[idxA][idxB] = matAdj[idxB][idxA] = c;
+        g.addEdge(idxA,idxB,c);
     }
 }
 
-void calculaCaminosCentrales(vector<vector<int>> &matAdj, const vector<int> &centralIndices, const vector<int> &nonCentralIndices, const vector<Colonias> &colonias) {
-    int n = matAdj.size();
-    vector<vector<int>> dist = matAdj;
-    vector<vector<int>> next(n, vector<int>(n, -1));
-
-    // Inicializar la matriz `next` para reconstruir caminos
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            if (matAdj[i][j] != INF && i != j) {
-                next[i][j] = j;
-            }
-        }
-    }
-
-    // Algoritmo de Floyd-Warshall
+void floydWarshall(vector<Colonias> &colonias, vector<vector<int>> &next, vector<vector<int>> &dist, int n) {
     for (int k = 0; k < n; k++) {
-        if (colonias[k].isNew) continue; // Ignorar colonias nuevas
+        if (colonias[k].isNew) continue;
         for (int i = 0; i < n; i++) {
-            if (colonias[i].isNew) continue; // Ignorar colonias nuevas
+            if (colonias[i].isNew) continue;
             for (int j = 0; j < n; j++) {
-                if (colonias[j].isNew) continue; // Ignorar colonias nuevas
+                if (colonias[j].isNew) continue;
                 if (dist[i][k] != INF && dist[k][j] != INF && dist[i][j] > dist[i][k] + dist[k][j]) {
                     dist[i][j] = dist[i][k] + dist[k][j];
                     next[i][j] = next[i][k];
@@ -88,9 +189,11 @@ void calculaCaminosCentrales(vector<vector<int>> &matAdj, const vector<int> &cen
             }
         }
     }
+}
 
-    cout << "-------------------\n";
-    cout << "3 - Caminos más cortos entre centrales.\n";
+void imprimirRutaCentrales(vector<int> &centralIndices, vector<vector<int>> &dist, vector<vector<int>> &next, vector<Colonias> &colonias, ofstream &checking2) {
+    checking2 << "-------------------\n";
+    checking2 << "3 - Caminos más cortos entre centrales.\n" << endl;
     for (int i = 0; i < centralIndices.size(); i++) {
         for (int j = i + 1; j < centralIndices.size(); j++) {
             int c1 = centralIndices[i];
@@ -103,15 +206,31 @@ void calculaCaminosCentrales(vector<vector<int>> &matAdj, const vector<int> &cen
                 if (at == c2) break;
             }
 
-            // Mostrar ruta
             for (int k = 0; k < ruta.size(); k++) {
-                cout << colonias[ruta[k]].nombre;
-                if (k < ruta.size() - 1) cout << " - ";
+                checking2 << colonias[ruta[k]].nombre;
+                if (k < ruta.size() - 1) checking2 << " - ";
             }
-            cout << " (" << dist[c1][c2] << ")\n";
+            checking2 << " (" << dist[c1][c2] << ")\n" << endl;
         }
     }
-    cout << "-------------------\n";
+    checking2 << "-------------------\n";
+}
+
+void calculaCaminosCentrales(vector<vector<int>> &matAdj, vector<int> &centralIndices, vector<int> &nonCentralIndices, vector<Colonias> &colonias, ofstream &checking2) {
+    int n = matAdj.size();
+    vector<vector<int>> dist = matAdj;
+    vector<vector<int>> next(n, vector<int>(n, -1));
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (matAdj[i][j] != INF && i != j) {
+                next[i][j] = j;
+            }
+        }
+    }
+
+    floydWarshall(colonias, next, dist, n);
+    imprimirRutaCentrales(centralIndices, dist, next, colonias, checking2);
 }
 
 void calculaCostoPosible(node &nodoAct, vector<vector<int>> &matAdj, int n) {
@@ -134,7 +253,18 @@ void calculaCostoPosible(node &nodoAct, vector<vector<int>> &matAdj, int n) {
     }
 }
 
-pair<int, vector<int>> tspConCentrales(vector<vector<int>> &matAdj, const vector<int> &nonCentralIndices, const vector<int> &centralIndices, const vector<Colonias> &colonias) {
+void imprimirTSP(int costoOptimo, vector<int> &rutaOptima, vector<Colonias> &Col, ofstream &checking2) {
+    checking2 << "-------------------\n";
+    checking2 << "2 - La ruta óptima.\n" << endl;
+    for (int i = 0; i < rutaOptima.size(); i++) {
+        checking2 << Col[rutaOptima[i]].nombre;
+        if (i < rutaOptima.size() - 1) checking2 << " - ";
+    }
+    checking2 << endl;
+    checking2 << "\nLa Ruta Óptima tiene un costo total de: " << costoOptimo << endl;
+}
+
+void TSP(vector<vector<int>> &matAdj, vector<int> &nonCentralIndices, vector<int> &centralIndices, vector<Colonias> &colonias, ofstream &checking2) {
     int n = nonCentralIndices.size();
     int costoOpt = INF;
     vector<int> rutaOptima;
@@ -169,7 +299,6 @@ pair<int, vector<int>> tspConCentrales(vector<vector<int>> &matAdj, const vector
                 hijo.ruta = nodoAct.ruta;
                 hijo.ruta.push_back(i);
 
-                // Verificar si se han visitado todas las no centrales
                 bool todasVisitadas = true;
                 for (int nc : nonCentralIndices) {
                     if (!hijo.visitados[nc]) {
@@ -179,7 +308,6 @@ pair<int, vector<int>> tspConCentrales(vector<vector<int>> &matAdj, const vector
                 }
 
                 if (todasVisitadas && hijo.nivel >= n) {
-                    // Intentar cerrar el ciclo si es válido
                     int costoReal = hijo.costoAcum + matAdj[i][nonCentralIndices[0]];
                     if (matAdj[i][nonCentralIndices[0]] != INF && costoReal < costoOpt) {
                         costoOpt = costoReal;
@@ -195,7 +323,7 @@ pair<int, vector<int>> tspConCentrales(vector<vector<int>> &matAdj, const vector
             }
         }
     }
-    return {costoOpt, rutaOptima};
+    imprimirTSP(costoOpt, rutaOptima, colonias, checking2);
 }
 
 int main() {
@@ -205,6 +333,8 @@ int main() {
     vector<Colonias> Col;
     vector<int> centralIndices, nonCentralIndices;
     map<string, int> nombreToIndex;
+    map<int, string> indexToNombre;
+    ofstream checking2("checking2.txt");
 
     string nombre;
     int x, y;
@@ -214,6 +344,7 @@ int main() {
         cin >> nombre >> x >> y >> isCentral;
         Col.push_back(Colonias(nombre, isCentral, false, x, y));
         nombreToIndex[nombre] = i;
+        indexToNombre[i] = nombre;
         if (isCentral) {
             centralIndices.push_back(i);
         } else {
@@ -223,58 +354,42 @@ int main() {
 
     vector<vector<int>> matAdj(n, vector<int>(n));
     iniciaMatriz(matAdj, n);
-    leeDatos(matAdj, nombreToIndex, m);
+    Graph g(n,m);
+    leeDatos(matAdj, nombreToIndex, m, g);
+    string nombre2;
 
-    for (int i = 0; i < k; i++) {
-        string a, b;
-        cin >> a >> b;
-        int idxA = nombreToIndex[a];
-        int idxB = nombreToIndex[b];
-        matAdj[idxA][idxB] = matAdj[idxB][idxA] = 0;
+    for (int i = 0; i < k; i++)
+    {
+        cin >> nombre >> nombre2;
+        int ind1 = nombreToIndex[nombre];
+        int ind2 = nombreToIndex[nombre2];
+        int ind = g.edgeToIndex[{ind1,ind2}];
+        g.edges[i] = {0,{ind1,ind2}};//sobre escribimos edge para que su peso sea 0 y así no tome esa ruta para el costo
     }
+
 
     for (int i = 0; i < q; i++) {
         cin >> nombre >> x >> y;
         Col.push_back(Colonias(nombre, false, true, x, y));
     }
 
-    auto [costoOptimo, rutaOptima] = tspConCentrales(matAdj, nonCentralIndices, centralIndices, Col);
+    g.kruskalMST();
+    
+    g.printEdgesK(indexToNombre, checking2);
+    checking2 << "Costo Total: " << g.costMSTKruskal << endl << endl;
 
-    cout << "-------------------\n";
-    cout << "2 - La ruta óptima.\n";
-    for (int i = 0; i < rutaOptima.size(); i++) {
-        cout << Col[rutaOptima[i]].nombre;
-        if (i < rutaOptima.size() - 1) cout << " - ";
-    }
-    cout << "\nLa Ruta Óptima tiene un costo total de: " << costoOptimo << endl;
-    cout << "-------------------\n";
+    TSP(matAdj, nonCentralIndices, centralIndices, Col, checking2);
 
-    calculaCaminosCentrales(matAdj, centralIndices, nonCentralIndices, Col);
+    checking2 << endl;
+
+    calculaCaminosCentrales(matAdj, centralIndices, nonCentralIndices, Col, checking2);
+
+    checking2.close();
 
     return 0;
 }
 
-//TODO - Test cases sin la conexion nueva
-/*
-5 8 1 2
-LindaVista 200 120 1
-Purisima 150 75 0
-Tecnologico -50 20 1
-Roma -75 50 0
-AltaVista -50 40 0
-LindaVista Purisima 48
-LindaVista Roma 17
-Purisima Tecnologico 40
-Purisima Roma 50
-Purisima AltaVista 80
-Tecnologico Roma 55
-Tecnologico AltaVista 15
-Roma AltaVista 18
-Independencia 180 -15
-Roble 45 68
-*/
-
-//TODO - Test cases normales:
+// Test cases:
 /*
 5 8 1 2
 LindaVista 200 120 1

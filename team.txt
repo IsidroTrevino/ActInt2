@@ -1,0 +1,7 @@
+1. Isidro Saul Trevino Lopez - A00837104
+Trabaje especificamente en la implementacion de las secciones 2 y 3 del programa, en la segunda seccion se implementa el algoritmo para solucionar el Traveling Salesman Problem modificado para que 
+encuentre la ruta mas corta para visitar todas las colonias no centrales una vez teniendo la opcion de pasar por una o mas colonia central. En la tercera seccion, se implementa el algoritmo de Floyd-Warshall
+para poder encontrar la ruta optima para ir a todas las centrales entre si, igualmente teniendo la opcion de pasar por una colonia no central. Ademas, me encargue de modificar el codigo
+en el main del programa para poder implementar estos dos algoritmos con sus variables e informacion correspondiente.
+
+2. Diego Castro Flores - A00835977
