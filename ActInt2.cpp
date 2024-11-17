@@ -175,13 +175,10 @@ void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int 
     }
 }
 
-void floydWarshall(vector<Colonias> &colonias, vector<vector<int>> &next, vector<vector<int>> &dist, int n) {
+void floydWarshall(vector<vector<int>> &dist, vector<vector<int>> &next, int n) {
     for (int k = 0; k < n; k++) {
-        if (colonias[k].isNew) continue;
         for (int i = 0; i < n; i++) {
-            if (colonias[i].isNew) continue;
             for (int j = 0; j < n; j++) {
-                if (colonias[j].isNew) continue;
                 if (dist[i][k] != INF && dist[k][j] != INF && dist[i][j] > dist[i][k] + dist[k][j]) {
                     dist[i][j] = dist[i][k] + dist[k][j];
                     next[i][j] = next[i][k];
@@ -200,10 +197,19 @@ void imprimirRutaCentrales(vector<int> &centralIndices, vector<vector<int>> &dis
             int c2 = centralIndices[j];
             if (dist[c1][c2] == INF) continue;
 
+            if (next[c1][c2] == -1) {
+                continue;
+            }
+
             vector<int> ruta;
-            for (int at = c1; at != -1; at = next[at][c2]) {
+            int at = c1;
+            ruta.push_back(at);
+            while (at != c2) {
+                at = next[at][c2];
+                if (at == -1) {
+                    break;
+                }
                 ruta.push_back(at);
-                if (at == c2) break;
             }
 
             for (int k = 0; k < ruta.size(); k++) {
@@ -216,22 +222,25 @@ void imprimirRutaCentrales(vector<int> &centralIndices, vector<vector<int>> &dis
     checking2 << "-------------------\n";
 }
 
-void calculaCaminosCentrales(vector<vector<int>> &matAdj, vector<int> &centralIndices, vector<int> &nonCentralIndices, vector<Colonias> &colonias, ofstream &checking2) {
+
+void calculaCaminosCentrales(vector<vector<int>> &matAdj, vector<int> &centralIndices, vector<Colonias> &colonias, ofstream &checking2) {
     int n = matAdj.size();
     vector<vector<int>> dist = matAdj;
     vector<vector<int>> next(n, vector<int>(n, -1));
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            if (matAdj[i][j] != INF && i != j) {
+            if (matAdj[i][j] != INF) {
                 next[i][j] = j;
             }
         }
     }
 
-    floydWarshall(colonias, next, dist, n);
+    floydWarshall(dist, next, n);
+
     imprimirRutaCentrales(centralIndices, dist, next, colonias, checking2);
 }
+
 
 void calculaCostoPosible(node &nodoAct, vector<vector<int>> &matAdj, int n) {
     nodoAct.costoPos = nodoAct.costoAcum;
@@ -382,7 +391,7 @@ int main() {
 
     checking2 << endl;
 
-    calculaCaminosCentrales(matAdj, centralIndices, nonCentralIndices, Col, checking2);
+    calculaCaminosCentrales(matAdj, centralIndices, Col, checking2);
 
     checking2.close();
 
