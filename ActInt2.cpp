@@ -60,16 +60,58 @@ void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int 
     }
 }
 
-void floydWarshall(vector<vector<int>> &matAdj, int n) {
+void calculaCaminosCentrales(vector<vector<int>> &matAdj, const vector<int> &centralIndices, const vector<int> &nonCentralIndices, const vector<Colonias> &colonias) {
+    int n = matAdj.size();
+    vector<vector<int>> dist = matAdj;
+    vector<vector<int>> next(n, vector<int>(n, -1));
+
+    // Inicializar la matriz `next` para reconstruir caminos
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (matAdj[i][j] != INF && i != j) {
+                next[i][j] = j;
+            }
+        }
+    }
+
+    // Algoritmo de Floyd-Warshall
     for (int k = 0; k < n; k++) {
+        if (colonias[k].isNew) continue; // Ignorar colonias nuevas
         for (int i = 0; i < n; i++) {
+            if (colonias[i].isNew) continue; // Ignorar colonias nuevas
             for (int j = 0; j < n; j++) {
-                if (matAdj[i][k] != INF && matAdj[k][j] != INF) {
-                    matAdj[i][j] = min(matAdj[i][j], matAdj[i][k] + matAdj[k][j]);
+                if (colonias[j].isNew) continue; // Ignorar colonias nuevas
+                if (dist[i][k] != INF && dist[k][j] != INF && dist[i][j] > dist[i][k] + dist[k][j]) {
+                    dist[i][j] = dist[i][k] + dist[k][j];
+                    next[i][j] = next[i][k];
                 }
             }
         }
     }
+
+    cout << "-------------------\n";
+    cout << "3 - Caminos más cortos entre centrales.\n";
+    for (int i = 0; i < centralIndices.size(); i++) {
+        for (int j = i + 1; j < centralIndices.size(); j++) {
+            int c1 = centralIndices[i];
+            int c2 = centralIndices[j];
+            if (dist[c1][c2] == INF) continue;
+
+            vector<int> ruta;
+            for (int at = c1; at != -1; at = next[at][c2]) {
+                ruta.push_back(at);
+                if (at == c2) break;
+            }
+
+            // Mostrar ruta
+            for (int k = 0; k < ruta.size(); k++) {
+                cout << colonias[ruta[k]].nombre;
+                if (k < ruta.size() - 1) cout << " - ";
+            }
+            cout << " (" << dist[c1][c2] << ")\n";
+        }
+    }
+    cout << "-------------------\n";
 }
 
 void calculaCostoPosible(node &nodoAct, vector<vector<int>> &matAdj, int n) {
@@ -117,7 +159,6 @@ pair<int, vector<int>> tspConCentrales(vector<vector<int>> &matAdj, const vector
         if (nodoAct.costoPos >= costoOpt) continue;
 
         for (int i = 0; i < matAdj.size(); i++) {
-            // Solo considerar conexiones válidas (no `isNew`) y no visitadas
             if (!nodoAct.visitados[i] && !colonias[i].isNew && matAdj[nodoAct.verticeActual][i] != INF) {
                 node hijo;
                 hijo.nivel = nodoAct.nivel + 1;
@@ -184,7 +225,13 @@ int main() {
     iniciaMatriz(matAdj, n);
     leeDatos(matAdj, nombreToIndex, m);
 
-    //! FALTA UN CIN NO SUBIR NO SUBIR NO SUBIR
+    for (int i = 0; i < k; i++) {
+        string a, b;
+        cin >> a >> b;
+        int idxA = nombreToIndex[a];
+        int idxB = nombreToIndex[b];
+        matAdj[idxA][idxB] = matAdj[idxB][idxA] = 0;
+    }
 
     for (int i = 0; i < q; i++) {
         cin >> nombre >> x >> y;
@@ -195,12 +242,14 @@ int main() {
 
     cout << "-------------------\n";
     cout << "2 - La ruta óptima.\n";
-    for (size_t i = 0; i < rutaOptima.size(); i++) {
+    for (int i = 0; i < rutaOptima.size(); i++) {
         cout << Col[rutaOptima[i]].nombre;
         if (i < rutaOptima.size() - 1) cout << " - ";
     }
     cout << "\nLa Ruta Óptima tiene un costo total de: " << costoOptimo << endl;
     cout << "-------------------\n";
+
+    calculaCaminosCentrales(matAdj, centralIndices, nonCentralIndices, Col);
 
     return 0;
 }
