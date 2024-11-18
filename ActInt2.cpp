@@ -13,12 +13,14 @@
 
 using namespace std;
 
+// Estructura para cada arista del grafo para kruskal
 struct edgeK
 {
     pair<int,int> conection;
     int cost;
 };
 
+// Estructura para el grafo
 struct Graph{
     // E Arcos (Edges)
     // V Vertices (Vertex)
@@ -40,10 +42,7 @@ struct Graph{
         edgeToWeight[{u,v}] = w;
         edgeToIndex[{u,v}] = edges.size() -1;
     }
-    void load();
-    void print();
     void kruskalMST();
-    void primMST();
     void printEdgesK(map<int, string>, ofstream &checking2);
 };
 
@@ -86,16 +85,6 @@ struct DisjointSets{
     
 };
 
-void Graph::load(){
-    int a,b,c;
-    for (int i = 0; i < E; i++)
-    {
-        cin >> a>>b>>c;
-        addEdge(a,b,c);
-        addEdge(b,a,c);
-    }
-}
-
 // O(E log E)
 void Graph::kruskalMST(){
     sort(edges.begin(), edges.end()); //ordenar ascendentemente con respecto al costo
@@ -124,6 +113,7 @@ void Graph::printEdgesK(map<int, string> indexToNombre, ofstream &checking2){
     checking2 << endl;
 }
 
+// Estructura para las colonias y sus coordenadas
 struct Colonias{
     string nombre;
 	float x, y;
@@ -142,6 +132,7 @@ struct Colonias{
 	}
 };
 
+// Estructura para el nodo del TSP
 struct node {
     int nivel;
     int costoAcum;
@@ -154,6 +145,7 @@ struct node {
     }
 };
 
+// Funcion para iniciar la matriz de adyacencia
 void iniciaMatriz(vector<vector<int>> &matAdj, int n) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -162,6 +154,7 @@ void iniciaMatriz(vector<vector<int>> &matAdj, int n) {
     }
 }
 
+// Funcion para leer los datos de las colonias (conexiones y pesos)
 void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int m, Graph & g) {
     string a, b;
     int c;
@@ -174,6 +167,8 @@ void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int 
     }
 }
 
+// Funcion para el algoritmo de Floyd-Warshall
+// Complejidad: O(n^3)
 void floydWarshall(vector<Colonias> &colonias, vector<vector<int>> &next, vector<vector<int>> &dist, int n) {
     for (int k = 0; k < n; k++) {
         for (int i = 0; i < n; i++) {
@@ -187,21 +182,31 @@ void floydWarshall(vector<Colonias> &colonias, vector<vector<int>> &next, vector
     }
 }
 
+// Funcion para imprimir los caminos más cortos entre las centrales
+// Complejidad: O(n^2)
 void imprimirRutaCentrales(vector<int> &centralIndices, vector<vector<int>> &dist, vector<vector<int>> &next, vector<Colonias> &colonias, ofstream &checking2) {
     checking2 << "-------------------\n";
     checking2 << "3 - Caminos más cortos entre centrales.\n" << endl;
+    // Se itera por los indices de las centrales
     for (int i = 0; i < centralIndices.size(); i++) {
         for (int j = i + 1; j < centralIndices.size(); j++) {
+            // Se obtienen los indices de las centrales
             int c1 = centralIndices[i];
             int c2 = centralIndices[j];
+            // Si la distancia entre las centrales es infinita, se continua
             if (dist[c1][c2] == INF) continue;
 
+            // Se inicia el vector de la ruta
             vector<int> ruta;
+            // para cada indice de la central 1, se obtiene el siguiente indice de la central 2
             for (int at = c1; at != -1; at = next[at][c2]) {
+                // Se agrega el indice a la ruta
                 ruta.push_back(at);
+                // Si el indice actual es igual al de la central 2, se rompe el ciclo
                 if (at == c2) break;
             }
 
+            // Se imprime la ruta
             for (int k = 0; k < ruta.size(); k++) {
                 checking2 << colonias[ruta[k]].nombre;
                 if (k < ruta.size() - 1) checking2 << " - ";
@@ -212,11 +217,15 @@ void imprimirRutaCentrales(vector<int> &centralIndices, vector<vector<int>> &dis
     checking2 << "-------------------\n";
 }
 
+// Funcion para calcular los caminos más cortos entre las centrales
+// Complejidad: O(n^3)
 void calculaCaminosCentrales(vector<vector<int>> &matAdj, vector<int> &centralIndices, vector<int> &nonCentralIndices, vector<Colonias> &colonias, ofstream &checking2) {
     int n = matAdj.size();
+    // Se inicia la matriz de distancias y la matriz de los siguientes nodos
     vector<vector<int>> dist = matAdj;
     vector<vector<int>> next(n, vector<int>(n, -1));
 
+    // Se inicializan los siguientes nodos
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             if (matAdj[i][j] != INF && i != j) {
@@ -225,11 +234,14 @@ void calculaCaminosCentrales(vector<vector<int>> &matAdj, vector<int> &centralIn
         }
     }
 
+    // Se llama a la función de Floyd-Warshall
     floydWarshall(colonias, next, dist, n);
+    // se imprime la ruta de las centrales
     imprimirRutaCentrales(centralIndices, dist, next, colonias, checking2);
 }
 
-
+// Funcion para calcular el costo posible de un nodo en el TSP
+// Complejidad: O(n^2)
 void calculaCostoPosible(node &nodoAct, vector<vector<int>> &matAdj, int n) {
     nodoAct.costoPos = nodoAct.costoAcum;
     for (int i = 0; i < n; i++) {
@@ -250,6 +262,7 @@ void calculaCostoPosible(node &nodoAct, vector<vector<int>> &matAdj, int n) {
     }
 }
 
+// Funcion para imprimir la ruta óptima del TSP
 void imprimirTSP(int costoOptimo, vector<int> &rutaOptima, vector<Colonias> &Col, ofstream &checking2) {
     checking2 << "-------------------\n";
     checking2 << "2 - La ruta óptima.\n" << endl;
@@ -261,11 +274,15 @@ void imprimirTSP(int costoOptimo, vector<int> &rutaOptima, vector<Colonias> &Col
     checking2 << "\nLa Ruta Óptima tiene un costo total de: " << costoOptimo << endl;
 }
 
+// Funcion para el algoritmo del TSP
+// Complejidad: O(2^n)
 void TSP(vector<vector<int>> &matAdj, vector<int> &nonCentralIndices, vector<int> &centralIndices, vector<Colonias> &colonias, ofstream &checking2) {
     int n = nonCentralIndices.size();
+    // se inicializan las variables del costo óptimo y la ruta óptima
     int costoOpt = INF;
     vector<int> rutaOptima;
 
+    // Se inicia el nodo raiz
     node raiz;
     raiz.nivel = 0;
     raiz.costoAcum = 0;
@@ -274,28 +291,37 @@ void TSP(vector<vector<int>> &matAdj, vector<int> &nonCentralIndices, vector<int
     raiz.visitados[raiz.verticeActual] = true;
     raiz.ruta.push_back(raiz.verticeActual);
 
+    // Se calcula el costo posible del nodo raiz
     calculaCostoPosible(raiz, matAdj, matAdj.size());
 
+    // Se crea la cola de prioridad
     priority_queue<node> pq;
     pq.push(raiz);
 
+    // Mientras la cola no esté vacía
     while (!pq.empty()) {
         node nodoAct = pq.top();
         pq.pop();
 
         if (nodoAct.costoPos >= costoOpt) continue;
 
+        // Se itera por los nodos
         for (int i = 0; i < matAdj.size(); i++) {
+            // si el nodo no ha sido visitado y la arista no es infinita
             if (!nodoAct.visitados[i] && matAdj[nodoAct.verticeActual][i] != INF) {
+                // Se crea un nuevo nodo hijo
                 node hijo;
                 hijo.nivel = nodoAct.nivel + 1;
                 hijo.verticeActual = i;
                 hijo.visitados = nodoAct.visitados;
                 hijo.visitados[i] = true;
                 hijo.costoAcum = nodoAct.costoAcum + matAdj[nodoAct.verticeActual][i];
+                // Se copia la ruta del nodo actual
                 hijo.ruta = nodoAct.ruta;
+                // Se agrega el indice del nodo al final de la ruta
                 hijo.ruta.push_back(i);
 
+                // Si todas las colonias no centrales han sido visitadas y el nivel es mayor o igual a n
                 bool todasVisitadas = true;
                 for (int nc : nonCentralIndices) {
                     if (!hijo.visitados[nc]) {
@@ -304,14 +330,19 @@ void TSP(vector<vector<int>> &matAdj, vector<int> &nonCentralIndices, vector<int
                     }
                 }
 
+                // Si todas las colonias no centrales han sido visitadas y el nivel es mayor o igual a n
                 if (todasVisitadas && hijo.nivel >= n) {
+                    // Se calcula el costo real
                     int costoReal = hijo.costoAcum + matAdj[i][nonCentralIndices[0]];
+                    // Si el costo real es menor al costo óptimo
                     if (matAdj[i][nonCentralIndices[0]] != INF && costoReal < costoOpt) {
+                        // Se actualiza el costo óptimo y la ruta óptima
                         costoOpt = costoReal;
                         rutaOptima = hijo.ruta;
                         rutaOptima.push_back(nonCentralIndices[0]);
                     }
                 } else {
+                    // Si el costo acumulado del hijo es menor al costo óptimo se calcula el costo posible y se agrega a la cola
                     calculaCostoPosible(hijo, matAdj, matAdj.size());
                     if (hijo.costoPos < costoOpt) {
                         pq.push(hijo);
@@ -320,12 +351,16 @@ void TSP(vector<vector<int>> &matAdj, vector<int> &nonCentralIndices, vector<int
             }
         }
     }
+    // Se imprime la ruta óptima
     imprimirTSP(costoOpt, rutaOptima, colonias, checking2);
 }
 
+// Funcion para calcular la distancia entre dos colonias
 float dist(const Colonias& p1, const Colonias& p2) {
     return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
+
+// Funcion para encontrar la colonia más cercana a una colonia nueva
 Colonias findClosest(const vector<Colonias>& points, const Colonias& target) {
     Colonias closestPoint;
     float minDistance = FLT_MAX;
@@ -340,7 +375,6 @@ Colonias findClosest(const vector<Colonias>& points, const Colonias& target) {
 
     return closestPoint;
 }
-
 
 int main() {
     int n, m, k, q;
@@ -380,21 +414,23 @@ int main() {
         int ind1 = nombreToIndex[nombre];
         int ind2 = nombreToIndex[nombre2];
         int ind = g.edgeToIndex[{ind1,ind2}];
-        g.edges[i] = {0,{ind1,ind2}};//sobre escribimos edge para que su peso sea 0 y así no tome esa ruta para el costo
+        g.edges[i] = {0,{ind1,ind2}};
     }
 
 
 
-
+    //Punto 1
     g.kruskalMST();
     
     g.printEdgesK(indexToNombre, checking2);
     checking2 << "Costo Total: " << g.costMSTKruskal << endl << endl;
 
+    //Punto 2
     TSP(matAdj, nonCentralIndices, centralIndices, Col, checking2);
 
     checking2 << endl;
 
+    //Punto 3
     calculaCaminosCentrales(matAdj, centralIndices, nonCentralIndices, Col, checking2);
 
     
