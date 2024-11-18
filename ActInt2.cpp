@@ -162,7 +162,6 @@ void iniciaMatriz(vector<vector<int>> &matAdj, int n) {
     }
 }
 
-
 void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int m, Graph & g) {
     string a, b;
     int c;
@@ -176,6 +175,14 @@ void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int 
 }
 
 void floydWarshall(vector<vector<int>> &dist, vector<vector<int>> &next, int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (dist[i][j] != INF && i != j) {
+                next[i][j] = j;
+            }
+        }
+    }
+
     for (int k = 0; k < n; k++) {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
@@ -188,59 +195,55 @@ void floydWarshall(vector<vector<int>> &dist, vector<vector<int>> &next, int n) 
     }
 }
 
+
 void imprimirRutaCentrales(vector<int> &centralIndices, vector<vector<int>> &dist, vector<vector<int>> &next, vector<Colonias> &colonias, ofstream &checking2) {
     checking2 << "-------------------\n";
     checking2 << "3 - Caminos más cortos entre centrales.\n" << endl;
-    for (int i = 0; i < centralIndices.size(); i++) {
-        for (int j = i + 1; j < centralIndices.size(); j++) {
-            int c1 = centralIndices[i];
-            int c2 = centralIndices[j];
-            if (dist[c1][c2] == INF) continue;
 
-            if (next[c1][c2] == -1) {
-                continue;
-            }
+    int n = centralIndices.size();
+    vector<int> fullRoute;
+    int totalCost = 0;
 
-            vector<int> ruta;
-            int at = c1;
-            ruta.push_back(at);
-            while (at != c2) {
-                at = next[at][c2];
-                if (at == -1) {
-                    break;
-                }
-                ruta.push_back(at);
-            }
+    for (size_t i = 0; i < centralIndices.size() - 1; i++) {
+        int u = centralIndices[i];
+        int v = centralIndices[i + 1];
 
-            for (int k = 0; k < ruta.size(); k++) {
-                checking2 << colonias[ruta[k]].nombre;
-                if (k < ruta.size() - 1) checking2 << " - ";
-            }
-            checking2 << " (" << dist[c1][c2] << ")\n" << endl;
+        vector<int> path;
+        int at = u;
+        path.push_back(at);
+        while (at != v) {
+            at = next[at][v];
+            if (at == -1) break;
+            path.push_back(at);
         }
+
+        if (i == 0) {
+            fullRoute.insert(fullRoute.end(), path.begin(), path.end());
+        } else {
+            fullRoute.insert(fullRoute.end(), path.begin() + 1, path.end());
+        }
+
+        totalCost += dist[u][v];
     }
+
+    for (int i = 0; i < fullRoute.size(); i++) {
+        checking2 << colonias[fullRoute[i]].nombre;
+        if (i < fullRoute.size() - 1) checking2 << " - ";
+    }
+    checking2 << " (" << totalCost << ")\n";
+
     checking2 << "-------------------\n";
 }
-
 
 void calculaCaminosCentrales(vector<vector<int>> &matAdj, vector<int> &centralIndices, vector<Colonias> &colonias, ofstream &checking2) {
     int n = matAdj.size();
     vector<vector<int>> dist = matAdj;
     vector<vector<int>> next(n, vector<int>(n, -1));
 
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            if (matAdj[i][j] != INF) {
-                next[i][j] = j;
-            }
-        }
-    }
-
     floydWarshall(dist, next, n);
 
     imprimirRutaCentrales(centralIndices, dist, next, colonias, checking2);
 }
-
 
 void calculaCostoPosible(node &nodoAct, vector<vector<int>> &matAdj, int n) {
     nodoAct.costoPos = nodoAct.costoAcum;
@@ -417,4 +420,41 @@ Roma AltaVista 18
 Purisima Tecnologico
 Independencia 180 -15
 Roble 45 68
+*/
+
+/*
+10 19 0 4
+Condesa -193 -151 1
+DelValle -142 -70 0
+Polanco 144 -122 1
+RomaNorte -91 -160 1
+Pantitlán -108 42 0
+Juárez -97 127 1
+Tlatelolco -160 12 0
+SantaFe 169 -91 1
+Cosmopolita 160 -67 1
+Merced 78 16 0
+Condesa Polanco 27
+Condesa Juárez 68
+Condesa Cosmopolita 34
+DelValle RomaNorte 80
+DelValle Pantitlán 68
+DelValle SantaFe 94
+DelValle Cosmopolita 86
+Polanco Juárez 92
+Polanco Tlatelolco 58
+Polanco Merced 54
+RomaNorte Juárez 69
+RomaNorte Cosmopolita 25
+Pantitlán Juárez 4
+Pantitlán SantaFe 67
+Pantitlán Cosmopolita 25
+Juárez SantaFe 78
+Juárez Cosmopolita 29
+Tlatelolco Cosmopolita 82
+SantaFe Merced 66
+FelipeAngeles -64 25
+Tlazintla -85 -106
+Penitenciaria -99 -83
+Porvenir -95 -196
 */
