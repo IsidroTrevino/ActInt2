@@ -5,3 +5,7 @@ para poder encontrar la ruta optima para ir a todas las centrales entre si, igua
 en el main del programa para poder implementar estos dos algoritmos con sus variables e informacion correspondiente.
 
 2. Diego Castro Flores - A00835977
+Trabajé en el desarrollo del punto 1 y 4. Para la implementación del punto 1 utilicé kruskal, para hacer un arbol de minima expansión,de manera que pudiera ver el cableado optimo entre los distintos nodos
+pero para tomar en cuenta las conexiones que ya cuentan con el nuevo cableado les asigné un costo de 0 para que así no se sumase al costo total del MST
+En el punto 4 me guié de la solución para encontrar dos puntos mas cercanos, pero como ya tenemos el primer punto es mejor ir directamente a la solución por fuerza bruta al comparar las distancias de los otros 
+puntos con el nuevo punto dado, al final agrega el nuevo punto a las colonias que tenemos para que el siguiente punto que se calcule lo haga tomando en cuenta los anteriores que hayan sido agregados.

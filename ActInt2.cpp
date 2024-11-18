@@ -6,7 +6,9 @@
 #include <queue>
 #include <fstream>
 #include <algorithm>
-
+#include <cmath>
+#include <cfloat>
+#include <iomanip>
 #define INF INT_MAX
 
 using namespace std;
@@ -321,6 +323,25 @@ void TSP(vector<vector<int>> &matAdj, vector<int> &nonCentralIndices, vector<int
     imprimirTSP(costoOpt, rutaOptima, colonias, checking2);
 }
 
+float dist(const Colonias& p1, const Colonias& p2) {
+    return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+}
+Colonias findClosest(const vector<Colonias>& points, const Colonias& target) {
+    Colonias closestPoint;
+    float minDistance = FLT_MAX;
+
+    for (const auto& point : points) {
+        float distance = dist(point, target);
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+        }
+    }
+
+    return closestPoint;
+}
+
+
 int main() {
     int n, m, k, q;
     cin >> n >> m >> k >> q;
@@ -363,10 +384,7 @@ int main() {
     }
 
 
-    for (int i = 0; i < q; i++) {
-        cin >> nombre >> x >> y;
-        Col.push_back(Colonias(nombre, false, x, y));
-    }
+
 
     g.kruskalMST();
     
@@ -379,8 +397,20 @@ int main() {
 
     calculaCaminosCentrales(matAdj, centralIndices, nonCentralIndices, Col, checking2);
 
-    checking2.close();
+    
+    //Punto 4
+    checking2 << "4 – Conexión de nuevas colonias.\n" << endl;
+    for (int i = 0; i < q; i++) {
+        cin >> nombre >> x >> y;
+        Colonias nueva(nombre, false, x, y);
+        Colonias cercana = findClosest(Col, nueva);
+        checking2<<nueva.nombre<<" debe conectarse con "<<cercana.nombre<<endl;
+        Col.push_back(nueva);
+    }
+    checking2<<endl;
 
+    checking2<<"-------------------"<<endl;
+    checking2.close();
     return 0;
 }
 
