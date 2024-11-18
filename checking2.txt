@@ -1,22 +1,22 @@
 -------------------
 1 - Cableado óptimo de nueva conexión.
 
-Pantitl�n - Ju�rez 4
+Pantitlán - Juárez 4
 RomaNorte - Cosmopolita 25
-Pantitl�n - Cosmopolita 25
+Pantitlán - Cosmopolita 25
 Condesa - Polanco 27
 Condesa - Cosmopolita 34
 Polanco - Merced 54
 Polanco - Tlatelolco 58
 SantaFe - Merced 66
-DelValle - Pantitl�n 68
+DelValle - Pantitlán 68
 
 Costo Total: 361
 
 -------------------
 2 - La ruta óptima.
 
-DelValle - SantaFe - Merced - Polanco - Tlatelolco - Cosmopolita - Pantitl�n - DelValle
+DelValle - SantaFe - Merced - Polanco - Tlatelolco - Cosmopolita - Pantitlán - DelValle
 
 La Ruta Óptima tiene un costo total de: 447
 
@@ -27,30 +27,30 @@ Condesa - Polanco (27)
 
 Condesa - Cosmopolita - RomaNorte (59)
 
-Condesa - Cosmopolita - Ju�rez (63)
+Condesa - Cosmopolita - Juárez (63)
 
-Condesa - Cosmopolita - Pantitl�n - SantaFe (126)
+Condesa - Cosmopolita - Pantitlán - SantaFe (126)
 
 Condesa - Cosmopolita (34)
 
 Polanco - Condesa - Cosmopolita - RomaNorte (86)
 
-Polanco - Condesa - Cosmopolita - Ju�rez (90)
+Polanco - Condesa - Cosmopolita - Juárez (90)
 
 Polanco - Merced - SantaFe (120)
 
 Polanco - Condesa - Cosmopolita (61)
 
-RomaNorte - Cosmopolita - Ju�rez (54)
+RomaNorte - Cosmopolita - Juárez (54)
 
-RomaNorte - Cosmopolita - Pantitl�n - SantaFe (117)
+RomaNorte - Cosmopolita - Pantitlán - SantaFe (117)
 
 RomaNorte - Cosmopolita (25)
 
-Ju�rez - Pantitl�n - SantaFe (71)
+Juárez - Pantitlán - SantaFe (71)
 
-Ju�rez - Cosmopolita (29)
+Juárez - Cosmopolita (29)
 
-SantaFe - Pantitl�n - Cosmopolita (92)
+SantaFe - Pantitlán - Cosmopolita (92)
 
 -------------------

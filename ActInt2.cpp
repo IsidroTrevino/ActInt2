@@ -125,20 +125,18 @@ void Graph::printEdgesK(map<int, string> indexToNombre, ofstream &checking2){
 struct Colonias{
     string nombre;
 	float x, y;
-    bool isCentral, isNew;
+    bool isCentral;
 	Colonias(){
 		x = y = 0;
         nombre = "";
         isCentral = false;
-        isNew = false;
 	}
     
-	Colonias(string nombre, bool isCentral, bool isNew, float x, float y){
+	Colonias(string nombre, bool isCentral, float x, float y){
 		this->x = x;
 		this->y = y;
         this->nombre = nombre;
         this->isCentral = isCentral;
-        this->isNew = isNew;
 	}
 };
 
@@ -176,11 +174,8 @@ void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int 
 
 void floydWarshall(vector<Colonias> &colonias, vector<vector<int>> &next, vector<vector<int>> &dist, int n) {
     for (int k = 0; k < n; k++) {
-        if (colonias[k].isNew) continue;
         for (int i = 0; i < n; i++) {
-            if (colonias[i].isNew) continue;
             for (int j = 0; j < n; j++) {
-                if (colonias[j].isNew) continue;
                 if (dist[i][k] != INF && dist[k][j] != INF && dist[i][j] > dist[i][k] + dist[k][j]) {
                     dist[i][j] = dist[i][k] + dist[k][j];
                     next[i][j] = next[i][k];
@@ -289,7 +284,7 @@ void TSP(vector<vector<int>> &matAdj, vector<int> &nonCentralIndices, vector<int
         if (nodoAct.costoPos >= costoOpt) continue;
 
         for (int i = 0; i < matAdj.size(); i++) {
-            if (!nodoAct.visitados[i] && !colonias[i].isNew && matAdj[nodoAct.verticeActual][i] != INF) {
+            if (!nodoAct.visitados[i] && matAdj[nodoAct.verticeActual][i] != INF) {
                 node hijo;
                 hijo.nivel = nodoAct.nivel + 1;
                 hijo.verticeActual = i;
@@ -342,7 +337,7 @@ int main() {
     for (int i = 0; i < n; i++) {
         bool isCentral;
         cin >> nombre >> x >> y >> isCentral;
-        Col.push_back(Colonias(nombre, isCentral, false, x, y));
+        Col.push_back(Colonias(nombre, isCentral, x, y));
         nombreToIndex[nombre] = i;
         indexToNombre[i] = nombre;
         if (isCentral) {
@@ -370,7 +365,7 @@ int main() {
 
     for (int i = 0; i < q; i++) {
         cin >> nombre >> x >> y;
-        Col.push_back(Colonias(nombre, false, true, x, y));
+        Col.push_back(Colonias(nombre, false, x, y));
     }
 
     g.kruskalMST();
