@@ -174,18 +174,13 @@ void leeDatos(vector<vector<int>> &matAdj, map<string, int> &nombreToIndex, int 
     }
 }
 
-void floydWarshall(vector<vector<int>> &dist, vector<vector<int>> &next, int n) {
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            if (dist[i][j] != INF && i != j) {
-                next[i][j] = j;
-            }
-        }
-    }
-
+void floydWarshall(vector<Colonias> &colonias, vector<vector<int>> &next, vector<vector<int>> &dist, int n) {
     for (int k = 0; k < n; k++) {
+        if (colonias[k].isNew) continue;
         for (int i = 0; i < n; i++) {
+            if (colonias[i].isNew) continue;
             for (int j = 0; j < n; j++) {
+                if (colonias[j].isNew) continue;
                 if (dist[i][k] != INF && dist[k][j] != INF && dist[i][j] > dist[i][k] + dist[k][j]) {
                     dist[i][j] = dist[i][k] + dist[k][j];
                     next[i][j] = next[i][k];
@@ -195,55 +190,48 @@ void floydWarshall(vector<vector<int>> &dist, vector<vector<int>> &next, int n) 
     }
 }
 
-
 void imprimirRutaCentrales(vector<int> &centralIndices, vector<vector<int>> &dist, vector<vector<int>> &next, vector<Colonias> &colonias, ofstream &checking2) {
     checking2 << "-------------------\n";
     checking2 << "3 - Caminos más cortos entre centrales.\n" << endl;
+    for (int i = 0; i < centralIndices.size(); i++) {
+        for (int j = i + 1; j < centralIndices.size(); j++) {
+            int c1 = centralIndices[i];
+            int c2 = centralIndices[j];
+            if (dist[c1][c2] == INF) continue;
 
-    int n = centralIndices.size();
-    vector<int> fullRoute;
-    int totalCost = 0;
+            vector<int> ruta;
+            for (int at = c1; at != -1; at = next[at][c2]) {
+                ruta.push_back(at);
+                if (at == c2) break;
+            }
 
-    for (size_t i = 0; i < centralIndices.size() - 1; i++) {
-        int u = centralIndices[i];
-        int v = centralIndices[i + 1];
-
-        vector<int> path;
-        int at = u;
-        path.push_back(at);
-        while (at != v) {
-            at = next[at][v];
-            if (at == -1) break;
-            path.push_back(at);
+            for (int k = 0; k < ruta.size(); k++) {
+                checking2 << colonias[ruta[k]].nombre;
+                if (k < ruta.size() - 1) checking2 << " - ";
+            }
+            checking2 << " (" << dist[c1][c2] << ")\n" << endl;
         }
-
-        if (i == 0) {
-            fullRoute.insert(fullRoute.end(), path.begin(), path.end());
-        } else {
-            fullRoute.insert(fullRoute.end(), path.begin() + 1, path.end());
-        }
-
-        totalCost += dist[u][v];
     }
-
-    for (int i = 0; i < fullRoute.size(); i++) {
-        checking2 << colonias[fullRoute[i]].nombre;
-        if (i < fullRoute.size() - 1) checking2 << " - ";
-    }
-    checking2 << " (" << totalCost << ")\n";
-
     checking2 << "-------------------\n";
 }
 
-void calculaCaminosCentrales(vector<vector<int>> &matAdj, vector<int> &centralIndices, vector<Colonias> &colonias, ofstream &checking2) {
+void calculaCaminosCentrales(vector<vector<int>> &matAdj, vector<int> &centralIndices, vector<int> &nonCentralIndices, vector<Colonias> &colonias, ofstream &checking2) {
     int n = matAdj.size();
     vector<vector<int>> dist = matAdj;
     vector<vector<int>> next(n, vector<int>(n, -1));
 
-    floydWarshall(dist, next, n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (matAdj[i][j] != INF && i != j) {
+                next[i][j] = j;
+            }
+        }
+    }
 
+    floydWarshall(colonias, next, dist, n);
     imprimirRutaCentrales(centralIndices, dist, next, colonias, checking2);
 }
+
 
 void calculaCostoPosible(node &nodoAct, vector<vector<int>> &matAdj, int n) {
     nodoAct.costoPos = nodoAct.costoAcum;
@@ -394,7 +382,7 @@ int main() {
 
     checking2 << endl;
 
-    calculaCaminosCentrales(matAdj, centralIndices, Col, checking2);
+    calculaCaminosCentrales(matAdj, centralIndices, nonCentralIndices, Col, checking2);
 
     checking2.close();
 
