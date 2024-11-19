@@ -360,7 +360,7 @@ float dist(const Colonias& p1, const Colonias& p2) {
     return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
 
-// Funcion para encontrar la colonia más cercana a una colonia nueva
+// Funcion para encontrar la colonia más cercana a una colonia nueva O(n)
 Colonias findClosest(const vector<Colonias>& points, const Colonias& target) {
     Colonias closestPoint;
     float minDistance = FLT_MAX;
